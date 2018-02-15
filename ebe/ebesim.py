@@ -8,7 +8,7 @@ class EBESim(object):
 
     """A class to receive and respond to messages."""
 
-    logger = logging.getLogger("UDPListener")
+    logger = logging.getLogger("EBESim")
 
     def __init__(self, ip, port):
         """

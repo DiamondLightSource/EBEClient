@@ -71,7 +71,8 @@ class EBEClient(object):
         if value is not None:
             return value
         else:
-            raise IOError("Get failed - received null value")
+            raise IOError("Get failed on param %s - received null value" %
+                          param)
 
     def set(self, param, value):
         self.logger.debug("Sending SET request: %d = %s", param, str(value))

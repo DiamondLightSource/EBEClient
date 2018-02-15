@@ -22,14 +22,12 @@ def parse_args():
         "-p", "--port", type=int, default=8080, dest="port",
         help="Port of EBE")
     parser.add_argument(
-        "--param", type=int, default=-1, dest="param",
-        help="Param to request")
+        "--param", type=int, dest="param", help="Param to request")
     parser.add_argument(
-        "--value", type=str, default="", dest="value",
-        help="Value to set")
+        "--value", type=str, dest="value", help="Value to set")
 
     args = parser.parse_args()
-    if args.value and args.param == -1:
+    if args.value and not args.param:
         parser.error("Must provide param to set with value")
     return args
 

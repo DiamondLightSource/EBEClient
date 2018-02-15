@@ -30,7 +30,7 @@ class EBESim(object):
         self._socket.close()
         self._socket.shutdown(SHUT_RDWR)
 
-    def _recv(self):
+    def recv(self):
         while True:
             self.logger.debug("Listening on %s:%d", *self._server)
             self.logger.debug("Listening for messages...")

@@ -1,6 +1,6 @@
 """A class to receive and print UDP messages."""
 
-from socket import socket, AF_INET, SOCK_DGRAM, SHUT_RDWR
+from socket import socket, AF_INET, SOCK_DGRAM
 import logging
 
 
@@ -28,7 +28,6 @@ class EBESim(object):
 
     def __del__(self):
         self._socket.close()
-        self._socket.shutdown(SHUT_RDWR)
 
     def recv(self):
         while True:

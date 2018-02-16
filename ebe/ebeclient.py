@@ -61,7 +61,7 @@ class EBEClient(object):
         limits = self._validate_response(response, "GetParaLimits")
         match = re.match(self.LIMITS_REGEX, limits)
         if match:
-            return tuple(int(value) for value in match.groups())
+            return tuple(float(value) for value in match.groups())
         else:
             self.logger.error("Unable to parse limits from response: %s",
                               response)
@@ -113,8 +113,8 @@ class EBEClient(object):
         self.logger.info("Param %s - Name: %s, Limits: [%d, %d]",
                          param, name, *limits)
 
-        if value < limits[0] or value > limits[1]:
-            self.logger.error("Value %s is outside allow range", value)
+        if float(value) < limits[0] or float(value) > limits[1]:
+            self.logger.error("Value %s is outside of allow range", value)
         else:
             command = self.SET_REQUEST.format(
                 method=self.SET_PARAM_METHOD.format(param=param), value=value)

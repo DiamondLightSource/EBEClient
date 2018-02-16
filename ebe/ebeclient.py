@@ -14,10 +14,12 @@ class EBEClient(object):
     GET_REQUEST = COMMAND_TEMPLATE.format(command="GetParaValue {param}")
     SET_REQUEST = COMMAND_TEMPLATE.format(command="{method} {value}")
     SET_PARAM_METHOD = "SetParaValue {param}"
-    # !1234|Param|OK:|Value|\n -- param and val need whitespace stripped
-    RESPONSE_REGEX = re.compile(r"!1234(?P<command>.+)(?P<status>.+)\n")
-    OK_STATUS_REGEX = re.compile(r"OK:(?P<value>.+)")
-    ERROR_STATUS_REGEX = re.compile(r"Error:(?P<error>.+)")
+    # !1234|Command|OK:|Value|\n -- param and val need whitespace stripped
+    OK_RESPONSE_REGEX = re.compile(
+        r"!1234(?P<command>.+)OK:(?P<value>.+)")
+    ERROR_RESPONSE_REGEX = re.compile(
+        r"!1234(?P<command>.+)Error:(?P<error>.+)")
+    LIMITS_REGEX = re.compile(r"(?P<low>.+);(?P<high>.+)")
 
     def __init__(self, ip, port, debug=False):
         """
@@ -47,12 +49,35 @@ class EBEClient(object):
     def __del__(self):
         self._socket.close()
 
+    def set_remote_mode(self):
+        self._send(self.COMMAND_TEMPLATE.format(command="SetRemoteMode 1"))
+
     def get_device_name(self):
         self._send(self.COMMAND_TEMPLATE.format(command="GetDeviceName"))
 
+    def get_param_limits(self, param):
+        response = self._send(self.COMMAND_TEMPLATE.format(
+            command="GetParaLimits {param}".format(param=param)))
+        limits = self._validate_response(response, "GetParaLimits")
+        match = re.match(self.LIMITS_REGEX, limits)
+        if match:
+            return tuple(int(value) for value in match.groups())
+        else:
+            self.logger.error("Unable to parse limits from response: %s",
+                              response)
+
+    def get_param_name(self, param):
+        response = self._send(self.COMMAND_TEMPLATE.format(
+            command="GetParaName {param}".format(param=param)))
+        name = self._validate_response(response, "GetParaName")
+        if name:
+            return name
+        else:
+            self.logger.error("Unable to parse name from response: %s",
+                              response)
+
     def _send(self, message):
         self.logger.debug("Sending message: %s", message)
-
         self._socket.sendto(message, self._server)
         self.logger.debug("Waiting for response...")
 
@@ -70,51 +95,58 @@ class EBEClient(object):
 
     def get(self, param):
         self.logger.debug("Sending GET request for: %d", param)
+        name = self.get_param_name(param)
         command = self.GET_REQUEST.format(param=param)
         response = self._send(command)
         if response is not None:
-            value = self._validate_response(response, command)
+            value = self._validate_response(response, "GetParaValue")
             if value is not None:
-                self.logger.debug("Param %d = %s", param, value)
+                self.logger.info("Param %d (%s) = %s", param, name, value)
                 return value
 
         raise IOError("Get failed on param %s" % param)
 
     def set(self, param, value):
         self.logger.debug("Sending SET request: %d = %s", param, str(value))
-        command = self.SET_REQUEST.format(
-            method=self.SET_PARAM_METHOD.format(param=param), value=value)
-        response = self._send(command)
-        if response is not None:
-            if self._validate_response(response, command):
-                self.logger.info("Param %s successfully set to %s",
-                                 param, value)
-                return
-            else:
-                self.logger.error("Value not set to requested value")
+        name = self.get_param_name(param)
+        limits = self.get_param_limits(param)
+        self.logger.info("Param %s - Name: %s, Limits: [%d, %d]",
+                         param, name, *limits)
+
+        if value < limits[0] or value > limits[1]:
+            self.logger.error("Value %s is outside allow range", value)
+        else:
+            command = self.SET_REQUEST.format(
+                method=self.SET_PARAM_METHOD.format(param=param), value=value)
+            response = self._send(command)
+            if response is not None:
+                if self._validate_response(response, "SetParaValue"):
+                    self.logger.info("Param %s successfully set to %s",
+                                     param, value)
+                    return
+                else:
+                    self.logger.error("Value not set to requested value")
 
         raise IOError("Set failed on param %s" % param)
 
     def _validate_response(self, response, requested_command):
-        match = re.match(self.RESPONSE_REGEX, response)
+        match = re.match(self.OK_RESPONSE_REGEX, response)
         if match:
-            command, status = match.groups()
+            command, value = match.groups()
             command = command.strip(" ")
-            status = status.strip(" ")
+            value = value.strip(" ")
             if command != requested_command:
                 self.logger.error("Failed to match response to request")
-                return
-        else:
-            self.logger.error("Failed to parse response: %s", response)
-            return
+            else:
+                return value
 
-        match = re.match(self.OK_STATUS_REGEX, status)
+        match = re.match(self.ERROR_RESPONSE_REGEX, response)
         if match:
-            value = match.groups()[0].strip(" ")
-            return value
-
-        match = re.match(self.ERROR_STATUS_REGEX, status)
-        if match:
-            error = match.groups()[0].strip(" ")
-            self.logger.error("Got error in response: %s", error)
+            command, error = match.groups()
+            command = command.strip(" ")
+            error = error.strip(" ")
+            if command != requested_command:
+                self.logger.error("Failed to match response to request")
+            else:
+                self.logger.error("Got error in response: %s", error)
             return

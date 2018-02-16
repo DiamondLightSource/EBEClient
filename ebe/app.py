@@ -25,6 +25,9 @@ def parse_args():
         "--param", type=int, dest="param", help="Param to request")
     parser.add_argument(
         "--value", type=str, dest="value", help="Value to set")
+    parser.add_argument(
+        "--remote", dest="remote", action="store_true",
+        help="Set remote mode")
 
     args = parser.parse_args()
     if args.value and not args.param:
@@ -37,7 +40,9 @@ def main():
     args = parse_args()
 
     ebe = EBEClient(args.ip, args.port, debug=True)
-    if args.param:
+    if args.remote:
+        ebe.set_remote_mode()
+    elif args.param:
         if args.value:
             ebe.set(args.param, args.value)
         else:

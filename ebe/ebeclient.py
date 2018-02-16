@@ -17,6 +17,8 @@ class EBEClient(object):
     # !1234|Command|OK:|Value|\n -- param and val need whitespace stripped
     OK_RESPONSE_REGEX = re.compile(
         r"!1234(?P<command>.+)OK:(?P<value>.+)")
+    SET_OK_RESPONSE_REGEX = re.compile(
+        r"!1234(?P<command>.+)OK")
     ERROR_RESPONSE_REGEX = re.compile(
         r"!1234(?P<command>.+)Error:(?P<error>.+)")
     LIMITS_REGEX = re.compile(r"(?P<low>.+);(?P<high>.+)")
@@ -139,6 +141,15 @@ class EBEClient(object):
                 self.logger.error("Failed to match response to request")
             else:
                 return value
+
+        match = re.match(self.SET_OK_RESPONSE_REGEX, response)
+        if match:
+            command = match.groups()[0]
+            command = command.strip(" ")
+            if command != requested_command:
+                self.logger.error("Failed to match response to request")
+            else:
+                return True
 
         match = re.match(self.ERROR_RESPONSE_REGEX, response)
         if match:

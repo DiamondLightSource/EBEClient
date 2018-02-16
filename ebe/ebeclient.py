@@ -19,17 +19,23 @@ class EBEClient(object):
     OK_STATUS_REGEX = re.compile(r"OK:(?P<value>.+)")
     ERROR_STATUS_REGEX = re.compile(r"Error:(?P<error>.+)")
 
-    logger = logging.getLogger("EBEClient")
-
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, debug=False):
         """
         Args:
             ip(str): IP address to send and receive commands on
             port(int): Port ...
+            debug(bool): Whether to enable debug logging
 
         """
-        self.logger.addHandler(logging.StreamHandler())
-        self.logger.setLevel(10)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        if debug:
+            level = 10  # Debug
+            log_format = "%(asctime)s - %(name)s.%(funcName)s - " \
+                         "%(levelname)s - %(message)s"
+        else:
+            level = 20  # Info
+            log_format = "%(message)s"
+        logging.basicConfig(level=level, format=log_format)
 
         self._server = (ip, port)
 
@@ -69,6 +75,7 @@ class EBEClient(object):
         if response is not None:
             value = self._validate_response(response, command)
             if value is not None:
+                self.logger.debug("Param %d = %s", param, value)
                 return value
 
         raise IOError("Get failed on param %s" % param)
@@ -80,8 +87,8 @@ class EBEClient(object):
         response = self._send(command)
         if response is not None:
             if self._validate_response(response, command):
-                self.logger.debug("Param %s successfully set to %s",
-                                  param, value)
+                self.logger.info("Param %s successfully set to %s",
+                                 param, value)
                 return
             else:
                 self.logger.error("Value not set to requested value")

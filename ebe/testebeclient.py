@@ -11,7 +11,7 @@ class TestEBEClient(TestCase):
 
     @patch(socket_patch)
     def setUp(self, _):
-        self.client = EBEClient("test", 1234)
+        self.client = EBEClient("test", 1234, debug=True)
 
     def test_send(self):
         message = "?1234 SetParaValue 5 10"
@@ -29,6 +29,7 @@ class TestEBEClient(TestCase):
     @patch(ebeclient_patch + "EBEClient._validate_response")
     def test_get(self, validate_mock, send_mock):
         expected_command = "?1234 GetParaValue 5\n"
+        validate_mock.return_value = 10
 
         value = self.client.get(5)
 

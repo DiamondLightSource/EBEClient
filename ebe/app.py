@@ -36,7 +36,7 @@ def main():
     """Run program."""
     args = parse_args()
 
-    ebe = EBEClient(args.ip, args.port)
+    ebe = EBEClient(args.ip, args.port, debug=True)
     if args.param:
         if args.value:
             ebe.set(args.param, args.value)

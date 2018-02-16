@@ -44,12 +44,28 @@ class EBESim(object):
     def _respond(self, address, request):
         if "?1234 GetDeviceName" in request:
             self._send(address, "!1234 GetDeviceName OK: EBE-4")
+        elif "?1234 GetParaLimits" in request:
+            if "17" in request:
+                # High voltage
+                self._send(address, "!1234 GetParaLimits OK: 0;2000")
+            else:
+                self._send(address, "!1234 GetParaLimits OK: <LOW>;<HIGH>")
+        elif "?1234 GetParaName" in request:
+            if "17" in request:
+                # High voltage
+                self._send(address, "!1234 GetParaName OK: Voltage")
+            else:
+                self._send(address, "!1234 GetParaName OK: <NAME>")
         elif "?1234 GetParaValue" in request:
-            self._send(address, "!1234 GetParaValue <PARAM> OK: <VALUE>")
+            if "17" in request:
+                # High voltage
+                self._send(address, "!1234 GetParaValue OK: 1500")
+            else:
+                self._send(address, "!1234 GetParaValue OK: <VALUE>")
         elif "?1234 SetParaValue" in request:
-            self._send(address, "!1234 SetParaValue <PARAM> OK: <VALUE>")
+            self._send(address, "!1234 SetParaValue OK: <VALUE>")
         else:
-            self._send(address, "!1234 UnknownParam OK: None")
+            self._send(address, "!1234 UnknownCommand OK: None")
 
     def _send(self, address, message):
         self.logger.debug("Sending message: %s", message)

@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument(
         "--local", dest="local", action="store_true",
         help="Set local mode")
+    parser.add_argument(
+        "--clear-error", dest="clear_error", action="store_true",
+        help="Clear any error status on the device")
 
     args = parser.parse_args()
     if args.value and not args.param:
@@ -43,7 +46,9 @@ def main():
     args = parse_args()
 
     ebe = EBEClient(args.ip, args.port, debug=True)
-    if args.remote:
+    if args.clear_error:
+        ebe.clear_error()
+    elif args.remote:
         ebe.set_remote_mode()
     elif args.local:
         ebe.set_local_mode()

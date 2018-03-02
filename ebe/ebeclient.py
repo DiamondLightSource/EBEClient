@@ -57,6 +57,9 @@ class EBEClient(object):
     def set_local_mode(self):
         self._send(self.COMMAND_TEMPLATE.format(command="SetRemoteMode 0"))
 
+    def clear_error(self):
+        self._send(self.COMMAND_TEMPLATE.format(command="SetClearError"))
+
     def get_device_name(self):
         self._send(self.COMMAND_TEMPLATE.format(command="GetDeviceName"))
 

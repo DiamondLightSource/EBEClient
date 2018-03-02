@@ -54,6 +54,9 @@ class EBEClient(object):
     def set_remote_mode(self):
         self._send(self.COMMAND_TEMPLATE.format(command="SetRemoteMode 1"))
 
+    def set_local_mode(self):
+        self._send(self.COMMAND_TEMPLATE.format(command="SetRemoteMode 0"))
+
     def get_device_name(self):
         self._send(self.COMMAND_TEMPLATE.format(command="GetDeviceName"))
 

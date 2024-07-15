@@ -1,6 +1,6 @@
 # Instructions
 
-Clone: git clone git@github.com:dls-controls/EBEClient.git
+Clone: git clone git@github.com:DiamondLightSource/EBEClient.git
 
 Run Simulator:
 
